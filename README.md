@@ -1,2 +1,4 @@
 # OfficeCDNCheck
-Microsoft Office CDN Version Check
+<b>Microsoft Office CDN Version Check</b></br>
+Purpose: Reports which versions of Office apps are available on the CDN"</br>
+Usage: OfficeCDNCheck [--CheckNow]</br>
