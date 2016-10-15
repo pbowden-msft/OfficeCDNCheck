@@ -1,0 +1,283 @@
+#!/bin/sh
+#set -x
+
+TOOL_NAME="Microsoft Office CDN Version Check"
+TOOL_VERSION="1.0"
+
+## Copyright (c) 2016 Microsoft Corp. All rights reserved.
+## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
+## Microsoft disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a 
+## particular purpose. The entire risk arising out of the use or performance of the scripts and documentation remains with you. In no event shall
+## Microsoft, its authors, or anyone else involved in the creation, production, or delivery of the scripts be liable for any damages whatsoever 
+## (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary 
+## loss) arising out of the use of or inability to use the sample scripts or documentation, even if Microsoft has been advised of the possibility
+## of such damages.
+## Feedback: pbowden@microsoft.com
+
+# Constants
+MAUID_MAU3X="0409MSAU03"
+MAUID_WORD2016="0409MSWD15"
+MAUID_EXCEL2016="0409XCEL15"
+MAUID_POWERPOINT2016="0409PPT315"
+MAUID_OUTLOOK2016="0409OPIM15"
+MAUID_ONENOTE2016="0409ONMC15"
+MAUID_OFFICE2011="0409MSOF14"
+MAUID_LYNC2011="0409UCCP14"
+MAUID_SKYPE2016="0409MSFB16"
+CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/OfficeMac/"
+CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/OfficeMac/"
+CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/OfficeMac/"
+CHANNEL_COLLATERAL_MSFT="http://officecdn.microsoft.com/pr/03adf619-38c6-4249-95ff-4a01c0ffc962/OfficeMac/"
+CHANNEL_COLLATERAL_DOGFOOD="http://officecdn.microsoft.com/pr/e2e9e618-e7cc-4681-a831-2f1eb16e7354/OfficeMac/"
+SCRATCH_AREA="$TMPDIR""OfficeCDNCheck"
+
+# Platform detection
+PLATFORM=$(uname -s)
+
+function ShowUsage {
+# Shows tool usage and parameters
+	echo $TOOL_NAME - $TOOL_VERSION
+	echo "Purpose: Reports which versions of Office apps are available on the CDN"
+	echo "Usage: OfficeCDNCheck [--CheckNow]"
+	echo
+	exit 0
+}
+
+function InitializeScratchArea {
+# Creates and cleans temporary file area
+	if [ -d "$SCRATCH_AREA" ]; then
+		rm -d -r -i -f "$SCRATCH_AREA"
+	fi
+	mkdir "$SCRATCH_AREA"
+	mkdir "$SCRATCH_AREA"/"Prod"
+	mkdir "$SCRATCH_AREA"/"Prod/Akamai"
+	mkdir "$SCRATCH_AREA"/"Prod/Azure"
+	mkdir "$SCRATCH_AREA"/"Prod/ChinaCache"
+	mkdir "$SCRATCH_AREA"/"Prod/Origin"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow/Akamai"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow/Azure"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow/ChinaCache"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow/Origin"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast/Akamai"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast/Azure"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast/ChinaCache"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast/Origin"
+	if [ $ALLCHANNELS ]; then
+		mkdir "$SCRATCH_AREA"/"Microsoft"
+		mkdir "$SCRATCH_AREA"/"Microsoft/Akamai"
+		mkdir "$SCRATCH_AREA"/"Microsoft/Azure"
+		mkdir "$SCRATCH_AREA"/"Microsoft/ChinaCache"
+		mkdir "$SCRATCH_AREA"/"Microsoft/Origin"
+		mkdir "$SCRATCH_AREA"/"Dogfood"
+		mkdir "$SCRATCH_AREA"/"Dogfood/Akamai"
+		mkdir "$SCRATCH_AREA"/"Dogfood/Azure"
+		mkdir "$SCRATCH_AREA"/"Dogfood/ChinaCache"
+		mkdir "$SCRATCH_AREA"/"Dogfood/Origin"
+	fi
+}
+
+function ResolveDownloadUrl {
+# Selects the CDN provider
+	PROVIDER="$2"
+	if [ "$PROVIDER" == "Akamai" ]; then
+		HTTPURL=(${1/https/http})
+		FILEURL=(${HTTPURL/officecdn.microsoft.com/officecdn.microsoft.com.edgesuite.net})
+	elif [ "$PROVIDER" == "Azure" ]; then
+		HTTPURL=(${1/https/http})
+		FILEURL=(${HTTPURL/officecdn.microsoft.com/C2R.a-0020.a-msedge.net})
+	elif [ "$PROVIDER" == "ChinaCache" ]; then
+		HTTPURL=(${1/https/http})
+		FILEURL=(${HTTPURL/officecdn.microsoft.com/officecdn.microsoft.com.chinacache.net})
+	else
+		FILEURL="$1"
+	fi
+	echo "$FILEURL"
+}
+
+function BuildApplicationArray {
+# Builds an array of all the MAU-enabled applications that we care about
+	MAUAPP=""
+	MAUAPP[0]="$MAUID_MAU3X"
+	MAUAPP[1]="$MAUID_WORD2016"
+	MAUAPP[2]="$MAUID_EXCEL2016"
+	MAUAPP[3]="$MAUID_POWERPOINT2016"
+	MAUAPP[4]="$MAUID_OUTLOOK2016"
+	MAUAPP[5]="$MAUID_ONENOTE2016"
+	MAUAPP[6]="$MAUID_OFFICE2011"
+	MAUAPP[7]="$MAUID_LYNC2011"
+	MAUAPP[8]="$MAUID_SKYPE2016"
+}
+
+function BuildCollateralArray {
+# Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
+	DOWNLOADARRAY=""
+	DOWNLOADARRAY[0]="$1"$MAUID_MAU3X
+	DOWNLOADARRAY[1]="$1"$MAUID_WORD2016
+	DOWNLOADARRAY[2]="$1"$MAUID_EXCEL2016
+	DOWNLOADARRAY[3]="$1"$MAUID_POWERPOINT2016
+	DOWNLOADARRAY[4]="$1"$MAUID_OUTLOOK2016
+	DOWNLOADARRAY[5]="$1"$MAUID_ONENOTE2016
+	DOWNLOADARRAY[6]="$1"$MAUID_OFFICE2011
+	DOWNLOADARRAY[7]="$1"$MAUID_LYNC2011
+	DOWNLOADARRAY[8]="$1"$MAUID_SKYPE2016
+}
+
+function DownloadCollateralFiles {
+# Downloads XML/CAT collateral files
+	for i in "$@"
+	do
+		#echo Downloading collateral file: "$i"
+		(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location "$i.{xml,cat}")
+	done
+}
+
+function GetAppVersionFromXML {
+# Returns the current app version from the XML collateral
+	local XML="$1"".xml"
+	local CHAN="$2"
+	local PROV="$3"
+	if [ "$1" == "0409MSOF14" ]; then
+		local APPVER=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o '<string>Office 2011.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | tail -1 | cut -d' ' -f 3)
+	elif [ "$1" == "0409UCCP14" ]; then
+		local APPVER=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -m 1 '<string>Lync 14.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | cut -d' ' -f 2)
+	else
+		local APPVER=($(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -A1 -m2 'Update Version' "$XML" | grep 'string' | sed -e 's,.*<string>\([^<]*\)</string>.*,\1,g'))
+	fi
+	if [ "$APPVER" == '' ]; then
+		echo "Undetermined"
+	else
+		echo "$APPVER"
+	fi
+}
+
+function GetHashFromCAT {
+# Returns the SHA1 hash from the CAT
+	local CAT="$1"".cat"
+	local CHAN="$2"
+	local PROV="$3"
+	local CATHASH=($(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && openssl sha1 "$CAT" | cut -d'=' -f2))
+	if [ "$CATHASH" == '' ]; then
+		echo "Undetermined"
+	else
+		echo "$CATHASH"
+	fi
+}
+
+function GetAppNameFromMAUID {
+# Performs a reverse look-up from MAUID to friendly name
+	case "$1" in
+		$MAUID_MAU3X)			APPNAME="MAU 3.x"
+								;;
+		$MAUID_WORD2016)		APPNAME="Word 2016"
+								;;
+		$MAUID_EXCEL2016)		APPNAME="Excel 2016"
+								;;
+		$MAUID_POWERPOINT2016)	APPNAME="PowerPoint 2016"
+								;;
+		$MAUID_OUTLOOK2016)		APPNAME="Outlook 2016"
+								;;
+		$MAUID_ONENOTE2016)		APPNAME="OneNote 2016"
+								;;
+		$MAUID_OFFICE2011)		APPNAME="Office 2011"
+								;;
+		$MAUID_LYNC2011)		APPNAME="Lync 2011"
+								;;
+		$MAUID_LYNC2011)		APPNAME="Skype for Business 2016"
+								;;
+	esac
+	echo "$APPNAME"
+}
+
+function GetChannelFromFFN {
+# Performs a reverse look-up from FFN to friendly name
+	case "$1" in
+		$CHANNEL_COLLATERAL_PROD)				CHANNELNAME="Prod"
+								;;
+		$CHANNEL_COLLATERAL_INSIDERSLOW)		CHANNELNAME="Insider_Slow"
+								;;
+		$CHANNEL_COLLATERAL_INSIDERFAST)		CHANNELNAME="Insider_Fast"
+								;;
+		$CHANNEL_COLLATERAL_MSFT)				CHANNELNAME="Microsoft"
+								;;
+		$CHANNEL_COLLATERAL_DOGFOOD)			CHANNELNAME="Dogfood"
+								;;
+	esac
+	echo "$CHANNELNAME"
+}
+
+# Evaluate command-line arguments
+if [[ $# = 0 ]]; then
+	ShowUsage
+else
+	for KEY in "$@"
+	do
+	case $KEY in
+    	--Help|-?|--help)
+    	ShowUsage
+    	shift # past argument
+    	;;
+    	--CheckNow|-c|--checknow)
+    	shift # past argument
+    	;;
+    	--All|-a|--all)
+    	ALLCHANNELS=true
+    	shift # past argument
+    	;;
+    	*)
+    	ShowUsage
+    	;;
+	esac
+	shift # past argument or value
+	done
+fi
+
+## Main
+
+# Get a clean area for writing temporary files
+InitializeScratchArea
+# Build channel array
+CHANNELS[0]="$CHANNEL_COLLATERAL_PROD"
+CHANNELS[1]="$CHANNEL_COLLATERAL_INSIDERSLOW"
+CHANNELS[2]="$CHANNEL_COLLATERAL_INSIDERFAST"
+if [ $ALLCHANNELS ]; then
+	CHANNELS[3]="$CHANNEL_COLLATERAL_MSFT"
+	CHANNELS[4]="$CHANNEL_COLLATERAL_DOGFOOD"
+fi
+
+# Routine for all channels in the array
+for c in "${CHANNELS[@]}"
+do
+	# Get friendly channel name
+	CHANNEL=$(GetChannelFromFFN "$c")
+	echo
+	echo "Channel: $CHANNEL"
+	PROVIDERS=""
+	PROVIDERS[0]="Origin"
+	PROVIDERS[1]="Akamai"
+	PROVIDERS[2]="Azure"
+	for p in "${PROVIDERS[@]}"
+	do
+		PROVIDER="$p"
+		echo "   Provider: $PROVIDER"
+		# Resolve collateral download URL
+		COLLATERALURL=$(ResolveDownloadUrl "$c" "$PROVIDER")
+		# Build an array of the collateral files to download
+		BuildCollateralArray "$COLLATERALURL"
+		# Download collateral files for each application
+		DownloadCollateralFiles "${DOWNLOADARRAY[@]}"
+		# Build an array of all MAU-enabled applications
+		BuildApplicationArray
+		# Build an array of each package location and get the version
+		for a in "${MAUAPP[@]}"
+		do
+			APPVERSION=$(GetAppVersionFromXML "$a" "$CHANNEL" "$PROVIDER")
+			HASH=$(GetHashFromCAT "$a" "$CHANNEL" "$PROVIDER")
+			echo "      Application: $a - $APPVERSION          $HASH"
+		done
+	done
+done
+
+echo
+exit 0
