@@ -221,7 +221,7 @@ else
 	for KEY in "$@"
 	do
 	case $KEY in
-    	--Help|-?|--help)
+    	--Help|-h|--help)
     	ShowUsage
     	shift # past argument
     	;;
