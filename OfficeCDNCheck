@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.1"
+TOOL_VERSION="1.2"
 
 ## Copyright (c) 2016 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -136,7 +136,11 @@ function DownloadCollateralFiles {
 	for i in "$@"
 	do
 		#echo Downloading collateral file: "$i"
-		(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location "$i.{xml,cat}")
+		if [ "$PROVIDER" == "Azure" ] || [ "$PROVIDER" == "ChinaCache" ]; then
+			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location --header 'Host:officecdn.microsoft.com' "$i.{xml,cat}")
+		else
+			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location "$i.{xml,cat}")
+		fi
 	done
 }
 
@@ -232,6 +236,10 @@ else
     	ALLCHANNELS=true
     	shift # past argument
     	;;
+    	--ChinaCache|-i|--chinacache)
+    	CHINA=true
+    	shift # past argument
+    	;;
     	*)
     	ShowUsage
     	;;
@@ -264,6 +272,9 @@ do
 	PROVIDERS[0]="Origin"
 	PROVIDERS[1]="Akamai"
 	PROVIDERS[2]="Azure"
+	if [ $CHINA ]; then
+		PROVIDERS[3]="ChinaCache"
+	fi
 	for p in "${PROVIDERS[@]}"
 	do
 		PROVIDER="$p"
