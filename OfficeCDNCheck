@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.2"
+TOOL_VERSION="1.3"
 
 ## Copyright (c) 2016 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -21,6 +21,7 @@ MAUID_EXCEL2016="0409XCEL15"
 MAUID_POWERPOINT2016="0409PPT315"
 MAUID_OUTLOOK2016="0409OPIM15"
 MAUID_ONENOTE2016="0409ONMC15"
+MAUID_OFFICE2016="0409SUIT15"
 MAUID_OFFICE2011="0409MSOF14"
 MAUID_LYNC2011="0409UCCP14"
 MAUID_SKYPE2016="0409MSFB16"
@@ -41,7 +42,7 @@ TEXT_NORMAL='\033[0m'
 # Platform detection
 PLATFORM=$(uname -s)
 
-function ShowUsage {
+function ShowUsage() {
 # Shows tool usage and parameters
 	echo $TOOL_NAME - $TOOL_VERSION
 	echo "Purpose: Reports which versions of Office apps are available on the CDN"
@@ -50,7 +51,7 @@ function ShowUsage {
 	exit 0
 }
 
-function InitializeScratchArea {
+function InitializeScratchArea() {
 # Creates and cleans temporary file area
 	if [ -d "$SCRATCH_AREA" ]; then
 		rm -d -r -i -f "$SCRATCH_AREA"
@@ -85,7 +86,7 @@ function InitializeScratchArea {
 	fi
 }
 
-function ResolveDownloadUrl {
+function ResolveDownloadUrl() {
 # Selects the CDN provider
 	PROVIDER="$2"
 	if [ "$PROVIDER" == "Akamai" ]; then
@@ -103,7 +104,7 @@ function ResolveDownloadUrl {
 	echo "$FILEURL"
 }
 
-function BuildApplicationArray {
+function BuildApplicationArray() {
 # Builds an array of all the MAU-enabled applications that we care about
 	MAUAPP=""
 	MAUAPP[0]="$MAUID_MAU3X"
@@ -112,12 +113,13 @@ function BuildApplicationArray {
 	MAUAPP[3]="$MAUID_POWERPOINT2016"
 	MAUAPP[4]="$MAUID_OUTLOOK2016"
 	MAUAPP[5]="$MAUID_ONENOTE2016"
-	MAUAPP[6]="$MAUID_OFFICE2011"
-	MAUAPP[7]="$MAUID_LYNC2011"
-	MAUAPP[8]="$MAUID_SKYPE2016"
+	MAUAPP[6]="$MAUID_OFFICE2016"
+	MAUAPP[7]="$MAUID_OFFICE2011"
+	MAUAPP[8]="$MAUID_LYNC2011"
+	MAUAPP[9]="$MAUID_SKYPE2016"
 }
 
-function BuildCollateralArray {
+function BuildCollateralArray() {
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
 	DOWNLOADARRAY=""
 	DOWNLOADARRAY[0]="$1"$MAUID_MAU3X
@@ -126,12 +128,13 @@ function BuildCollateralArray {
 	DOWNLOADARRAY[3]="$1"$MAUID_POWERPOINT2016
 	DOWNLOADARRAY[4]="$1"$MAUID_OUTLOOK2016
 	DOWNLOADARRAY[5]="$1"$MAUID_ONENOTE2016
-	DOWNLOADARRAY[6]="$1"$MAUID_OFFICE2011
-	DOWNLOADARRAY[7]="$1"$MAUID_LYNC2011
-	DOWNLOADARRAY[8]="$1"$MAUID_SKYPE2016
+	DOWNLOADARRAY[6]="$1"$MAUID_OFFICE2016
+	DOWNLOADARRAY[7]="$1"$MAUID_OFFICE2011
+	DOWNLOADARRAY[8]="$1"$MAUID_LYNC2011
+	DOWNLOADARRAY[9]="$1"$MAUID_SKYPE2016
 }
 
-function DownloadCollateralFiles {
+function DownloadCollateralFiles() {
 # Downloads XML/CAT collateral files
 	for i in "$@"
 	do
@@ -144,7 +147,7 @@ function DownloadCollateralFiles {
 	done
 }
 
-function GetAppVersionFromXML {
+function GetAppVersionFromXML() {
 # Returns the current app version from the XML collateral
 	local XML="$1"".xml"
 	local CHAN="$2"
@@ -163,7 +166,7 @@ function GetAppVersionFromXML {
 	fi
 }
 
-function GetHashFromCAT {
+function GetHashFromCAT() {
 # Returns the SHA1 hash from the CAT
 	local CAT="$1"".cat"
 	local CHAN="$2"
@@ -176,7 +179,7 @@ function GetHashFromCAT {
 	fi
 }
 
-function GetAppNameFromMAUID {
+function GetAppNameFromMAUID() {
 # Performs a reverse look-up from MAUID to friendly name
 	case "$1" in
 		$MAUID_MAU3X)			APPNAME="MAU 3.x"
@@ -191,6 +194,8 @@ function GetAppNameFromMAUID {
 								;;
 		$MAUID_ONENOTE2016)		APPNAME="OneNote 2016"
 								;;
+		$MAUID_OFFICE2016)		APPNAME="Office 2016"
+								;;
 		$MAUID_OFFICE2011)		APPNAME="Office 2011"
 								;;
 		$MAUID_LYNC2011)		APPNAME="Lync 2011"
@@ -201,7 +206,7 @@ function GetAppNameFromMAUID {
 	echo "$APPNAME"
 }
 
-function GetChannelFromFFN {
+function GetChannelFromFFN() {
 # Performs a reverse look-up from FFN to friendly name
 	case "$1" in
 		$CHANNEL_COLLATERAL_PROD)				CHANNELNAME="Prod"
