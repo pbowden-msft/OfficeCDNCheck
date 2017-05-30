@@ -2,9 +2,9 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.4"
+TOOL_VERSION="1.5"
 
-## Copyright (c) 2016 Microsoft Corp. All rights reserved.
+## Copyright (c) 2017 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
 ## Microsoft disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a 
 ## particular purpose. The entire risk arising out of the use or performance of the scripts and documentation remains with you. In no event shall
@@ -42,17 +42,17 @@ TEXT_NORMAL='\033[0m'
 # Platform detection
 PLATFORM=$(uname -s)
 
-function ShowUsage() {
 # Shows tool usage and parameters
+function ShowUsage() {
 	echo $TOOL_NAME - $TOOL_VERSION
-	echo "Purpose: Reports which versions of Office apps are available on the CDN"
+	echo "Purpose: Reports which versions of Office apps are available on the Content Delivery Network (CDN)"
 	echo "Usage: OfficeCDNCheck [--CheckNow] [--All]"
 	echo
 	exit 0
 }
 
-function InitializeScratchArea() {
 # Creates and cleans temporary file area
+function InitializeScratchArea() {
 	if [ -d "$SCRATCH_AREA" ]; then
 		rm -d -r -i -f "$SCRATCH_AREA"
 	fi
@@ -61,33 +61,33 @@ function InitializeScratchArea() {
 	mkdir "$SCRATCH_AREA"/"Prod/Akamai"
 	mkdir "$SCRATCH_AREA"/"Prod/Azure"
 	mkdir "$SCRATCH_AREA"/"Prod/ChinaCache"
-	mkdir "$SCRATCH_AREA"/"Prod/Origin"
+	mkdir "$SCRATCH_AREA"/"Prod/Local"
 	mkdir "$SCRATCH_AREA"/"Insider_Slow"
 	mkdir "$SCRATCH_AREA"/"Insider_Slow/Akamai"
 	mkdir "$SCRATCH_AREA"/"Insider_Slow/Azure"
 	mkdir "$SCRATCH_AREA"/"Insider_Slow/ChinaCache"
-	mkdir "$SCRATCH_AREA"/"Insider_Slow/Origin"
+	mkdir "$SCRATCH_AREA"/"Insider_Slow/Local"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/Akamai"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/Azure"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/ChinaCache"
-	mkdir "$SCRATCH_AREA"/"Insider_Fast/Origin"
+	mkdir "$SCRATCH_AREA"/"Insider_Fast/Local"
 	if [ $ALLCHANNELS ]; then
 		mkdir "$SCRATCH_AREA"/"Microsoft"
 		mkdir "$SCRATCH_AREA"/"Microsoft/Akamai"
 		mkdir "$SCRATCH_AREA"/"Microsoft/Azure"
 		mkdir "$SCRATCH_AREA"/"Microsoft/ChinaCache"
-		mkdir "$SCRATCH_AREA"/"Microsoft/Origin"
+		mkdir "$SCRATCH_AREA"/"Microsoft/Local"
 		mkdir "$SCRATCH_AREA"/"Dogfood"
 		mkdir "$SCRATCH_AREA"/"Dogfood/Akamai"
 		mkdir "$SCRATCH_AREA"/"Dogfood/Azure"
 		mkdir "$SCRATCH_AREA"/"Dogfood/ChinaCache"
-		mkdir "$SCRATCH_AREA"/"Dogfood/Origin"
+		mkdir "$SCRATCH_AREA"/"Dogfood/Local"
 	fi
 }
 
-function ResolveDownloadUrl() {
 # Selects the CDN provider
+function ResolveDownloadUrl() {
 	PROVIDER="$2"
 	if [ "$PROVIDER" == "Akamai" ]; then
 		HTTPURL=(${1/https/https})
@@ -104,8 +104,8 @@ function ResolveDownloadUrl() {
 	echo "$FILEURL"
 }
 
-function BuildApplicationArray() {
 # Builds an array of all the MAU-enabled applications that we care about
+function BuildApplicationArray() {
 	MAUAPP=""
 	MAUAPP[0]="$MAUID_MAU3X"
 	MAUAPP[1]="$MAUID_WORD2016"
@@ -119,8 +119,8 @@ function BuildApplicationArray() {
 	MAUAPP[9]="$MAUID_SKYPE2016"
 }
 
-function BuildCollateralArray() {
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
+function BuildCollateralArray() {
 	DOWNLOADARRAY=""
 	DOWNLOADARRAY[0]="$1"$MAUID_MAU3X
 	DOWNLOADARRAY[1]="$1"$MAUID_WORD2016
@@ -134,21 +134,21 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[9]="$1"$MAUID_SKYPE2016
 }
 
-function DownloadCollateralFiles() {
 # Downloads XML/CAT collateral files
+function DownloadCollateralFiles() {
 	for i in "$@"
 	do
 		#echo Downloading collateral file: "$i"
 		if [ "$PROVIDER" == "Azure" ] || [ "$PROVIDER" == "ChinaCache" ]; then
-			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location --header 'Host:officecdn.microsoft.com' "$i.{xml,cat}")
+			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location --header 'Host:officecdn.microsoft.com' "$i{.xml,.cat,-chk.xml}")
 		else
-			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location "$i.{xml,cat}")
+			(cd "$SCRATCH_AREA"/"$CHANNEL"/"$PROVIDER" && curl --silent --remote-name --location "$i{.xml,.cat,-chk.xml}")
 		fi
 	done
 }
 
-function GetAppVersionFromXML() {
 # Returns the current app version from the XML collateral
+function GetAppVersionFromXML() {
 	local XML="$1"".xml"
 	local CHAN="$2"
 	local PROV="$3"
@@ -166,8 +166,8 @@ function GetAppVersionFromXML() {
 	fi
 }
 
-function GetHashFromCAT() {
 # Returns the SHA1 hash from the CAT
+function GetHashFromCAT() {
 	local CAT="$1"".cat"
 	local CHAN="$2"
 	local PROV="$3"
@@ -179,8 +179,8 @@ function GetHashFromCAT() {
 	fi
 }
 
-function GetAppNameFromMAUID() {
 # Performs a reverse look-up from MAUID to friendly name
+function GetAppNameFromMAUID() {
 	case "$1" in
 		$MAUID_MAU3X)			APPNAME="MAU 3.x"
 								;;
@@ -206,16 +206,16 @@ function GetAppNameFromMAUID() {
 	echo "$APPNAME"
 }
 
-function GetChannelFromFFN() {
 # Performs a reverse look-up from FFN to friendly name
+function GetChannelFromFFN() {
 	case "$1" in
-		$CHANNEL_COLLATERAL_PROD)				CHANNELNAME="Prod"
+		$CHANNEL_COLLATERAL_PROD)			CHANNELNAME="Prod"
 								;;
 		$CHANNEL_COLLATERAL_INSIDERSLOW)		CHANNELNAME="Insider_Slow"
 								;;
 		$CHANNEL_COLLATERAL_INSIDERFAST)		CHANNELNAME="Insider_Fast"
 								;;
-		$CHANNEL_COLLATERAL_MSFT)				CHANNELNAME="Microsoft"
+		$CHANNEL_COLLATERAL_MSFT)			CHANNELNAME="Microsoft"
 								;;
 		$CHANNEL_COLLATERAL_DOGFOOD)			CHANNELNAME="Dogfood"
 								;;
@@ -274,7 +274,7 @@ do
 	echo
 	echo "${TEXT_RED}Channel: $CHANNEL ${TEXT_NORMAL}"
 	PROVIDERS=""
-	PROVIDERS[0]="Origin"
+	PROVIDERS[0]="Local"
 	PROVIDERS[1]="Akamai"
 	PROVIDERS[2]="Azure"
 	if [ $CHINA ]; then
@@ -296,9 +296,11 @@ do
 		for a in "${MAUAPP[@]}"
 		do
 			APPVERSION=$(GetAppVersionFromXML "$a" "$CHANNEL" "$PROVIDER")
-			HASH=$(GetHashFromCAT "$a" "$CHANNEL" "$PROVIDER")
+			CHKFILE="$a"
+			CHKFILE+="-CHK"
+			CHKVERSION=$(GetAppVersionFromXML "$CHKFILE" "$CHANNEL" "$PROVIDER")
 			printf "%-55s" "     Application: $a - $APPVERSION"
-			echo "$HASH"
+			echo "$CHKFILE - $CHKVERSION"
 		done
 	done
 done
