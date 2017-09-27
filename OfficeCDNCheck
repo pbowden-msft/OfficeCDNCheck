@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.5"
+TOOL_VERSION="1.6"
 
 ## Copyright (c) 2017 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -46,7 +46,7 @@ PLATFORM=$(uname -s)
 function ShowUsage() {
 	echo $TOOL_NAME - $TOOL_VERSION
 	echo "Purpose: Reports which versions of Office apps are available on the Content Delivery Network (CDN)"
-	echo "Usage: OfficeCDNCheck [--CheckNow] [--All]"
+	echo "Usage: OfficeCDNCheck [--Production] [--InsiderSlow] [--InsiderFast] [--All]"
 	echo
 	exit 0
 }
@@ -72,18 +72,16 @@ function InitializeScratchArea() {
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/Azure"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/ChinaCache"
 	mkdir "$SCRATCH_AREA"/"Insider_Fast/Local"
-	if [ $ALLCHANNELS ]; then
-		mkdir "$SCRATCH_AREA"/"Microsoft"
-		mkdir "$SCRATCH_AREA"/"Microsoft/Akamai"
-		mkdir "$SCRATCH_AREA"/"Microsoft/Azure"
-		mkdir "$SCRATCH_AREA"/"Microsoft/ChinaCache"
-		mkdir "$SCRATCH_AREA"/"Microsoft/Local"
-		mkdir "$SCRATCH_AREA"/"Dogfood"
-		mkdir "$SCRATCH_AREA"/"Dogfood/Akamai"
-		mkdir "$SCRATCH_AREA"/"Dogfood/Azure"
-		mkdir "$SCRATCH_AREA"/"Dogfood/ChinaCache"
-		mkdir "$SCRATCH_AREA"/"Dogfood/Local"
-	fi
+	mkdir "$SCRATCH_AREA"/"Microsoft"
+	mkdir "$SCRATCH_AREA"/"Microsoft/Akamai"
+	mkdir "$SCRATCH_AREA"/"Microsoft/Azure"
+	mkdir "$SCRATCH_AREA"/"Microsoft/ChinaCache"
+	mkdir "$SCRATCH_AREA"/"Microsoft/Local"
+	mkdir "$SCRATCH_AREA"/"Dogfood"
+	mkdir "$SCRATCH_AREA"/"Dogfood/Akamai"
+	mkdir "$SCRATCH_AREA"/"Dogfood/Azure"
+	mkdir "$SCRATCH_AREA"/"Dogfood/ChinaCache"
+	mkdir "$SCRATCH_AREA"/"Dogfood/Local"
 }
 
 # Selects the CDN provider
@@ -211,13 +209,13 @@ function GetChannelFromFFN() {
 	case "$1" in
 		$CHANNEL_COLLATERAL_PROD)			CHANNELNAME="Prod"
 								;;
-		$CHANNEL_COLLATERAL_INSIDERSLOW)		CHANNELNAME="Insider_Slow"
+		$CHANNEL_COLLATERAL_INSIDERSLOW)	CHANNELNAME="Insider_Slow"
 								;;
-		$CHANNEL_COLLATERAL_INSIDERFAST)		CHANNELNAME="Insider_Fast"
+		$CHANNEL_COLLATERAL_INSIDERFAST)	CHANNELNAME="Insider_Fast"
 								;;
 		$CHANNEL_COLLATERAL_MSFT)			CHANNELNAME="Microsoft"
 								;;
-		$CHANNEL_COLLATERAL_DOGFOOD)			CHANNELNAME="Dogfood"
+		$CHANNEL_COLLATERAL_DOGFOOD)		CHANNELNAME="Dogfood"
 								;;
 	esac
 	echo "$CHANNELNAME"
@@ -234,7 +232,24 @@ else
     	ShowUsage
     	shift # past argument
     	;;
-    	--CheckNow|-c|--checknow)
+    	--Production|-pr|--production)
+		PROD=true
+    	shift # past argument
+    	;;
+    	--InsiderSlow|-is|--insiderslow)
+		SLOW=true
+    	shift # past argument
+    	;;
+    	--InsiderFast|-if|--insiderfast)
+		FAST=true
+    	shift # past argument
+    	;;
+    	--Microsoft|-ms|--microsoft)
+		MSFT=true
+    	shift # past argument
+    	;;
+    	--Dogfood|-df|--dogfood)
+		DOGF=true
     	shift # past argument
     	;;
     	--All|-a|--all)
@@ -258,12 +273,21 @@ fi
 # Get a clean area for writing temporary files
 InitializeScratchArea
 # Build channel array
-CHANNELS[0]="$CHANNEL_COLLATERAL_PROD"
-CHANNELS[1]="$CHANNEL_COLLATERAL_INSIDERSLOW"
-CHANNELS[2]="$CHANNEL_COLLATERAL_INSIDERFAST"
-if [ $ALLCHANNELS ]; then
-	CHANNELS[3]="$CHANNEL_COLLATERAL_MSFT"
-	CHANNELS[4]="$CHANNEL_COLLATERAL_DOGFOOD"
+CHANNELS=()
+if [ $PROD ] || [ $ALLCHANNELS ]; then
+	CHANNELS+=("$CHANNEL_COLLATERAL_PROD")
+fi
+if [ $SLOW ] || [ $ALLCHANNELS ]; then
+	CHANNELS+=("$CHANNEL_COLLATERAL_INSIDERSLOW")
+fi
+if [ $FAST ] || [ $ALLCHANNELS ]; then
+	CHANNELS+=("$CHANNEL_COLLATERAL_INSIDERFAST")
+fi
+if [ $MSFT ]; then
+	CHANNELS+=("$CHANNEL_COLLATERAL_MSFT")
+fi
+if [ $DOGF ]; then
+	CHANNELS+=("$CHANNEL_COLLATERAL_DOGFOOD")
 fi
 
 # Routine for all channels in the array
