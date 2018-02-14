@@ -2,9 +2,9 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.7"
+TOOL_VERSION="1.8"
 
-## Copyright (c) 2017 Microsoft Corp. All rights reserved.
+## Copyright (c) 2018 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
 ## Microsoft disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a 
 ## particular purpose. The entire risk arising out of the use or performance of the scripts and documentation remains with you. In no event shall
@@ -26,6 +26,8 @@ MAUID_OFFICE2016="0409SUIT15"
 MAUID_OFFICE2011="0409MSOF14"
 MAUID_LYNC2011="0409UCCP14"
 MAUID_SKYPE2016="0409MSFB16"
+MAUID_REMOTEDESKTOP="0409MSRD10"
+MAUID_COMPANYPORTAL="0409IMCP01"
 CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/OfficeMac/"
 CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/OfficeMac/"
 CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/OfficeMac/"
@@ -48,7 +50,7 @@ PLATFORM=$(uname -s)
 function ShowUsage() {
 	echo $TOOL_NAME - $TOOL_VERSION
 	echo "Purpose: Reports which versions of Office apps are available on the Content Delivery Network (CDN)"
-	echo "Usage: OfficeCDNCheck [--Production] [--InsiderSlow] [--InsiderFast] [--All]"
+	echo "Usage: OfficeCDNCheck [--Production] [--InsiderSlow] [--InsiderFast] [--AllChannels] [--Local] [--Azure] [--Akamai] [--ChinaCache] [--AllProviders]"
 	echo
 	exit 0
 }
@@ -123,6 +125,8 @@ function BuildApplicationArray() {
 	MAUAPP[8]="$MAUID_OFFICE2011"
 	MAUAPP[9]="$MAUID_LYNC2011"
 	MAUAPP[10]="$MAUID_SKYPE2016"
+	MAUAPP[11]="$MAUID_REMOTEDESKTOP"
+	MAUAPP[12]="$MAUID_COMPANYPORTAL"
 }
 
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
@@ -139,6 +143,8 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[8]="$1"$MAUID_OFFICE2011
 	DOWNLOADARRAY[9]="$1"$MAUID_LYNC2011
 	DOWNLOADARRAY[10]="$1"$MAUID_SKYPE2016
+	DOWNLOADARRAY[11]="$1"$MAUID_REMOTEDESKTOP
+	DOWNLOADARRAY[12]="$1"$MAUID_COMPANYPORTAL
 }
 
 # Downloads XML/CAT collateral files
@@ -211,6 +217,10 @@ function GetAppNameFromMAUID() {
 								;;
 		$MAUID_LYNC2011)		APPNAME="Skype for Business 2016"
 								;;
+		$MAUID_REMOTEDESKTOP)	APPNAME="Remote Desktop v10.x"
+								;;
+		$MAUID_COMPANYPORTAL)	APPNAME="Intune Company Portal"
+								;;
 	esac
 	echo "$APPNAME"
 }
@@ -265,16 +275,32 @@ else
 		DOGF=true
     	shift # past argument
     	;;
-	--Ultrathin|-ut|--ultrathin)
+		--Ultrathin|-ut|--ultrathin)
 		THIN=true
     	shift # past argument
     	;;
-    	--All|-a|--all)
+    	--AllChannels|-ac|--allchannels)
     	ALLCHANNELS=true
     	shift # past argument
     	;;
-    	--ChinaCache|-i|--chinacache)
+    	--Local|-l|--local)
+    	LOCAL=true
+    	shift # past argument
+    	;;
+    	--Azure|-az|--azure)
+    	AZURE=true
+    	shift # past argument
+    	;;
+    	--Akamai|-ak|--akamai)
+    	AKAMAI=true
+    	shift # past argument
+    	;;
+    	--ChinaCache|-ch|--chinacache)
     	CHINA=true
+    	shift # past argument
+    	;;
+    	--AllProviders|-ap|--allproviders)
+    	ALLPROVIDERS=true
     	shift # past argument
     	;;
     	*)
@@ -317,13 +343,23 @@ do
 	CHANNEL=$(GetChannelFromFFN "$c")
 	echo
 	echo "${TEXT_RED}Channel: $CHANNEL ${TEXT_NORMAL}"
-	PROVIDERS=""
-	PROVIDERS[0]="Local"
-	PROVIDERS[1]="Akamai"
-	PROVIDERS[2]="Azure"
-	if [ $CHINA ]; then
-		PROVIDERS[3]="ChinaCache"
+	PROVIDERS=()
+	if [ $LOCAL ] || [ $ALLPROVIDERS ]; then
+		PROVIDERS+=("Local")
 	fi
+	if [ $AZURE ] || [ $ALLPROVIDERS ]; then
+		PROVIDERS+=("Azure")
+	fi
+	if [ $AKAMAI ] || [ $ALLPROVIDERS ]; then
+		PROVIDERS+=("Akamai")
+	fi
+	if [ $CHINA ] || [ $ALLPROVIDERS ]; then
+		PROVIDERS+=("ChinaCache")
+	fi
+	if [ ${#PROVIDERS[@]} -eq 0 ]; then
+		PROVIDERS+=("Akamai")
+	fi
+
 	for p in "${PROVIDERS[@]}"
 	do
 		PROVIDER="$p"
