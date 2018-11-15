@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="1.9"
+TOOL_VERSION="2.0"
 
 ## Copyright (c) 2018 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -31,11 +31,11 @@ MAUID_LYNC2011="0409UCCP14"
 MAUID_SKYPE2016="0409MSFB16"
 MAUID_REMOTEDESKTOP="0409MSRD10"
 MAUID_COMPANYPORTAL="0409IMCP01"
-CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/OfficeMac/"
-CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/OfficeMac/"
-CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/OfficeMac/"
-CHANNEL_COLLATERAL_MSFT="http://officecdn.microsoft.com/pr/03adf619-38c6-4249-95ff-4a01c0ffc962/OfficeMac/"
-CHANNEL_COLLATERAL_DOGFOOD="http://officecdn.microsoft.com/pr/e2e9e618-e7cc-4681-a831-2f1eb16e7354/OfficeMac/"
+CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/MacAutoupdate/"
+CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/MacAutoupdate/"
+CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/MacAutoupdate/"
+CHANNEL_COLLATERAL_MSFT="http://officecdn.microsoft.com/pr/03adf619-38c6-4249-95ff-4a01c0ffc962/MacAutoupdate/"
+CHANNEL_COLLATERAL_DOGFOOD="http://officecdn.microsoft.com/pr/e2e9e618-e7cc-4681-a831-2f1eb16e7354/MacAutoupdate/"
 SCRATCH_AREA="$TMPDIR""OfficeCDNCheck"
 
 ## Formatting support
