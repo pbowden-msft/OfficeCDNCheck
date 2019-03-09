@@ -2,9 +2,9 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.0"
+TOOL_VERSION="2.1"
 
-## Copyright (c) 2018 Microsoft Corp. All rights reserved.
+## Copyright (c) 2019 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
 ## Microsoft disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a 
 ## particular purpose. The entire risk arising out of the use or performance of the scripts and documentation remains with you. In no event shall
@@ -15,7 +15,7 @@ TOOL_VERSION="2.0"
 ## Feedback: pbowden@microsoft.com
 
 # Constants
-MAUID_MAU3X="0409MSAU03"
+MAUID_MAU4X="0409MSAU04"
 MAUID_WORD2016="0409MSWD15"
 MAUID_WORD2019="0409MSWD2019"
 MAUID_EXCEL2016="0409XCEL15"
@@ -111,7 +111,7 @@ function ResolveDownloadUrl() {
 # Builds an array of all the MAU-enabled applications that we care about
 function BuildApplicationArray() {
 	MAUAPP=""
-	MAUAPP[0]="$MAUID_MAU3X"
+	MAUAPP[0]="$MAUID_MAU4X"
 	MAUAPP[1]="$MAUID_WORD2016"
 	MAUAPP[2]="$MAUID_WORD2019"
 	MAUAPP[3]="$MAUID_EXCEL2016"
@@ -132,7 +132,7 @@ function BuildApplicationArray() {
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
 function BuildCollateralArray() {
 	DOWNLOADARRAY=""
-	DOWNLOADARRAY[0]="$1"$MAUID_MAU3X
+	DOWNLOADARRAY[0]="$1"$MAUID_MAU4X
 	DOWNLOADARRAY[1]="$1"$MAUID_WORD2016
 	DOWNLOADARRAY[2]="$1"$MAUID_WORD2019
 	DOWNLOADARRAY[3]="$1"$MAUID_EXCEL2016
@@ -198,7 +198,7 @@ function GetHashFromCAT() {
 # Performs a reverse look-up from MAUID to friendly name
 function GetAppNameFromMAUID() {
 	case "$1" in
-		$MAUID_MAU3X)			APPNAME="MAU 3.x"
+		$MAUID_MAU4X)			APPNAME="MAU 4.x"
 								;;
 		$MAUID_WORD2016)		APPNAME="Word 2016"
 								;;
