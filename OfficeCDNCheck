@@ -33,6 +33,8 @@ MAUID_LYNC2011="0409UCCP14"
 MAUID_SKYPE2016="0409MSFB16"
 MAUID_REMOTEDESKTOP="0409MSRD10"
 MAUID_COMPANYPORTAL="0409IMCP01"
+MAUID_EDGECANARY="0409EDCN01"
+MAUID_EDGEDEV="0409EDDV01"
 CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/MacAutoupdate/"
 CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/MacAutoupdate/"
 CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/MacAutoupdate/"
@@ -131,6 +133,8 @@ function BuildApplicationArray() {
 	MAUAPP[15]="$MAUID_SKYPE2016"
 	MAUAPP[16]="$MAUID_REMOTEDESKTOP"
 	MAUAPP[17]="$MAUID_COMPANYPORTAL"
+	MAUAPP[18]="$MAUID_EDGECANARY"
+	MAUAPP[19]="$MAUID_EDGEDEV"
 }
 
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
@@ -154,6 +158,8 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[15]="$1"$MAUID_SKYPE2016
 	DOWNLOADARRAY[16]="$1"$MAUID_REMOTEDESKTOP
 	DOWNLOADARRAY[17]="$1"$MAUID_COMPANYPORTAL
+	DOWNLOADARRAY[18]="$1"$MAUID_EDGECANARY
+	DOWNLOADARRAY[19]="$1"$MAUID_EDGEDEV
 }
 
 # Downloads XML/CAT collateral files
@@ -214,9 +220,9 @@ function GetAppNameFromMAUID() {
 								;;
 		$MAUID_EXCEL2019)		APPNAME="Excel 2019"
 								;;
-		$MAUID_POWERPOINT2016)	APPNAME="PowerPoint 2016"
+		$MAUID_POWERPOINT2016)		APPNAME="PowerPoint 2016"
 								;;
-		$MAUID_POWERPOINT2019)	APPNAME="PowerPoint 2019"
+		$MAUID_POWERPOINT2019)		APPNAME="PowerPoint 2019"
 								;;
 		$MAUID_OUTLOOK2016)		APPNAME="Outlook 2016"
 								;;
@@ -236,9 +242,13 @@ function GetAppNameFromMAUID() {
 								;;
 		$MAUID_LYNC2011)		APPNAME="Skype for Business 2016"
 								;;
-		$MAUID_REMOTEDESKTOP)	APPNAME="Remote Desktop v10.x"
+		$MAUID_REMOTEDESKTOP)		APPNAME="Remote Desktop v10.x"
 								;;
-		$MAUID_COMPANYPORTAL)	APPNAME="Intune Company Portal"
+		$MAUID_COMPANYPORTAL)		APPNAME="Intune Company Portal"
+								;;
+		$MAUID_EDGECANARY)		APPNAME="Edge Canary"
+								;;
+		$MAUID_EDGEDEV)			APPNAME="Edge Dev"
 								;;
 	esac
 	echo "$APPNAME"
