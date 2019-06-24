@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.2"
+TOOL_VERSION="2.3"
 
 ## Copyright (c) 2019 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -35,6 +35,7 @@ MAUID_REMOTEDESKTOP="0409MSRD10"
 MAUID_COMPANYPORTAL="0409IMCP01"
 MAUID_EDGECANARY="0409EDCN01"
 MAUID_EDGEDEV="0409EDDV01"
+MAUID_DEFENDER="0409WDAV00"
 CHANNEL_COLLATERAL_PROD="http://officecdn.microsoft.com/pr/C1297A47-86C4-4C1F-97FA-950631F94777/MacAutoupdate/"
 CHANNEL_COLLATERAL_INSIDERSLOW="http://officecdn.microsoft.com/pr/1ac37578-5a24-40fb-892e-b89d85b6dfaa/MacAutoupdate/"
 CHANNEL_COLLATERAL_INSIDERFAST="http://officecdn.microsoft.com/pr/4B2D7701-0A4F-49C8-B4CB-0C2D4043F51F/MacAutoupdate/"
@@ -135,6 +136,7 @@ function BuildApplicationArray() {
 	MAUAPP[17]="$MAUID_COMPANYPORTAL"
 	MAUAPP[18]="$MAUID_EDGECANARY"
 	MAUAPP[19]="$MAUID_EDGEDEV"
+	MAUAPP[20]="$MAUID_DEFENDER"
 }
 
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
@@ -160,6 +162,7 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[17]="$1"$MAUID_COMPANYPORTAL
 	DOWNLOADARRAY[18]="$1"$MAUID_EDGECANARY
 	DOWNLOADARRAY[19]="$1"$MAUID_EDGEDEV
+	DOWNLOADARRAY[20]="$1"$MAUID_DEFENDER
 }
 
 # Downloads XML/CAT collateral files
@@ -249,6 +252,8 @@ function GetAppNameFromMAUID() {
 		$MAUID_EDGECANARY)		APPNAME="Edge Canary"
 								;;
 		$MAUID_EDGEDEV)			APPNAME="Edge Dev"
+								;;
+		$MAUID_DEFENDER)		APPNAME="Defender ATP"
 								;;
 	esac
 	echo "$APPNAME"
