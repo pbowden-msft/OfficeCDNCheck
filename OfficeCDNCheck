@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.3"
+TOOL_VERSION="2.4"
 
 ## Copyright (c) 2019 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -243,7 +243,7 @@ function GetAppNameFromMAUID() {
 								;;
 		$MAUID_LYNC2011)		APPNAME="Lync 2011"
 								;;
-		$MAUID_LYNC2011)		APPNAME="Skype for Business 2016"
+		$MAUID_SKYPE2016)		APPNAME="Skype for Business 2016"
 								;;
 		$MAUID_REMOTEDESKTOP)		APPNAME="Remote Desktop v10.x"
 								;;
