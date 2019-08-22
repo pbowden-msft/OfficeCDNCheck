@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.4"
+TOOL_VERSION="2.5"
 
 ## Copyright (c) 2019 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -135,9 +135,10 @@ function BuildApplicationArray() {
 	MAUAPP[15]="$MAUID_SKYPE2016"
 	MAUAPP[16]="$MAUID_REMOTEDESKTOP"
 	MAUAPP[17]="$MAUID_COMPANYPORTAL"
-	MAUAPP[18]="$MAUID_EDGECANARY"
-	MAUAPP[19]="$MAUID_EDGEDEV"
-	MAUAPP[20]="$MAUID_DEFENDER"
+	MAUAPP[18]="$MAUID_EDGEBETA"
+	MAUAPP[19]="$MAUID_EDGECANARY"
+	MAUAPP[20]="$MAUID_EDGEDEV"
+	MAUAPP[21]="$MAUID_DEFENDER"
 }
 
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
@@ -161,9 +162,10 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[15]="$1"$MAUID_SKYPE2016
 	DOWNLOADARRAY[16]="$1"$MAUID_REMOTEDESKTOP
 	DOWNLOADARRAY[17]="$1"$MAUID_COMPANYPORTAL
-	DOWNLOADARRAY[18]="$1"$MAUID_EDGECANARY
-	DOWNLOADARRAY[19]="$1"$MAUID_EDGEDEV
-	DOWNLOADARRAY[20]="$1"$MAUID_DEFENDER
+	DOWNLOADARRAY[18]="$1"$MAUID_EDGEBETA
+	DOWNLOADARRAY[19]="$1"$MAUID_EDGECANARY
+	DOWNLOADARRAY[20]="$1"$MAUID_EDGEDEV
+	DOWNLOADARRAY[21]="$1"$MAUID_DEFENDER
 }
 
 # Downloads XML/CAT collateral files
@@ -249,6 +251,8 @@ function GetAppNameFromMAUID() {
 		$MAUID_REMOTEDESKTOP)		APPNAME="Remote Desktop v10.x"
 								;;
 		$MAUID_COMPANYPORTAL)		APPNAME="Intune Company Portal"
+								;;
+		$MAUID_EDGEBETA)		APPNAME="Edge Beta"
 								;;
 		$MAUID_EDGECANARY)		APPNAME="Edge Canary"
 								;;
