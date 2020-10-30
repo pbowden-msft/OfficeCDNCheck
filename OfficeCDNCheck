@@ -2,9 +2,9 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.5"
+TOOL_VERSION="2.6"
 
-## Copyright (c) 2019 Microsoft Corp. All rights reserved.
+## Copyright (c) 2020 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
 ## Microsoft disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a 
 ## particular purpose. The entire risk arising out of the use or performance of the scripts and documentation remains with you. In no event shall
@@ -15,7 +15,7 @@ TOOL_VERSION="2.5"
 ## Feedback: pbowden@microsoft.com
 
 # Constants
-MAUID_MAU4X="0409MSAU04"
+MAUID_MAU4X="0409MSau04"
 MAUID_WORD2016="0409MSWD15"
 MAUID_WORD2019="0409MSWD2019"
 MAUID_EXCEL2016="0409XCEL15"
@@ -33,6 +33,7 @@ MAUID_LYNC2011="0409UCCP14"
 MAUID_SKYPE2016="0409MSFB16"
 MAUID_REMOTEDESKTOP="0409MSRD10"
 MAUID_COMPANYPORTAL="0409IMCP01"
+MAUID_EDGE="0409EDGE01"
 MAUID_EDGEBETA="0409EDBT01"
 MAUID_EDGECANARY="0409EDCN01"
 MAUID_EDGEDEV="0409EDDV01"
@@ -135,10 +136,11 @@ function BuildApplicationArray() {
 	MAUAPP[15]="$MAUID_SKYPE2016"
 	MAUAPP[16]="$MAUID_REMOTEDESKTOP"
 	MAUAPP[17]="$MAUID_COMPANYPORTAL"
-	MAUAPP[18]="$MAUID_EDGEBETA"
-	MAUAPP[19]="$MAUID_EDGECANARY"
-	MAUAPP[20]="$MAUID_EDGEDEV"
-	MAUAPP[21]="$MAUID_DEFENDER"
+	MAUAPP[18]="$MAUID_EDGE"
+	MAUAPP[19]="$MAUID_EDGEBETA"
+	MAUAPP[20]="$MAUID_EDGECANARY"
+	MAUAPP[21]="$MAUID_EDGEDEV"
+	MAUAPP[22]="$MAUID_DEFENDER"
 }
 
 # Builds an array of MAU collateral file-paths which we'll use later for downloading XML and CAT files
@@ -162,10 +164,11 @@ function BuildCollateralArray() {
 	DOWNLOADARRAY[15]="$1"$MAUID_SKYPE2016
 	DOWNLOADARRAY[16]="$1"$MAUID_REMOTEDESKTOP
 	DOWNLOADARRAY[17]="$1"$MAUID_COMPANYPORTAL
-	DOWNLOADARRAY[18]="$1"$MAUID_EDGEBETA
-	DOWNLOADARRAY[19]="$1"$MAUID_EDGECANARY
-	DOWNLOADARRAY[20]="$1"$MAUID_EDGEDEV
-	DOWNLOADARRAY[21]="$1"$MAUID_DEFENDER
+	DOWNLOADARRAY[18]="$1"$MAUID_EDGE
+	DOWNLOADARRAY[19]="$1"$MAUID_EDGEBETA
+	DOWNLOADARRAY[20]="$1"$MAUID_EDGECANARY
+	DOWNLOADARRAY[21]="$1"$MAUID_EDGEDEV
+	DOWNLOADARRAY[22]="$1"$MAUID_DEFENDER
 }
 
 # Downloads XML/CAT collateral files
@@ -252,6 +255,8 @@ function GetAppNameFromMAUID() {
 								;;
 		$MAUID_COMPANYPORTAL)		APPNAME="Intune Company Portal"
 								;;
+		$MAUID_EDGE)			APPNAME="Edge"
+								;;
 		$MAUID_EDGEBETA)		APPNAME="Edge Beta"
 								;;
 		$MAUID_EDGECANARY)		APPNAME="Edge Canary"
@@ -292,15 +297,15 @@ else
     	ShowUsage
     	shift # past argument
     	;;
-    	--Production|-pr|--production)
+    	--Production|-pr|--production|-cc|--current)
 		PROD=true
     	shift # past argument
     	;;
-    	--InsiderSlow|-is|--insiderslow)
+    	--InsiderSlow|-is|--insiderslow|-pre|--preview)
 		SLOW=true
     	shift # past argument
     	;;
-    	--InsiderFast|-if|--insiderfast)
+    	--InsiderFast|-if|--insiderfast|-beta|--beta)
 		FAST=true
     	shift # past argument
     	;;
