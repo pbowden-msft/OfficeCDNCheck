@@ -2,7 +2,7 @@
 #set -x
 
 TOOL_NAME="Microsoft Office CDN Version Check"
-TOOL_VERSION="2.6"
+TOOL_VERSION="2.7"
 
 ## Copyright (c) 2020 Microsoft Corp. All rights reserved.
 ## Scripts are not supported under any Microsoft standard support program or service. The scripts are provided AS IS without warranty of any kind.
@@ -54,12 +54,16 @@ TEXT_NORMAL='\033[0m'
 
 # Platform detection
 PLATFORM=$(uname -s)
+SHOWLINK=false
+if [[ "$TERM_PROGRAM" != "Apple_Terminal" ]]; then
+    SHOWLINK=true
+fi
 
 # Shows tool usage and parameters
 function ShowUsage() {
 	echo $TOOL_NAME - $TOOL_VERSION
 	echo "Purpose: Reports which versions of Office apps are available on the Content Delivery Network (CDN)"
-	echo "Usage: OfficeCDNCheck [--Production] [--InsiderSlow] [--InsiderFast] [--AllChannels] [--Local] [--Azure] [--Akamai] [--ChinaCache] [--AllProviders]"
+	echo "Usage: OfficeCDNCheck [--Production || Current] [--InsiderSlow || Preview] [--InsiderFast || Beta] [--AllChannels] [--Local] [--Azure] [--Akamai] [--ChinaCache] [--AllProviders] [--Date] [--Link] [--Check]"
 	echo
 	exit 0
 }
@@ -203,6 +207,46 @@ function GetAppVersionFromXML() {
 	fi
 }
 
+# Returns the current app date from the XML collateral
+function GetAppDateFromXML() {
+    if [ "$DATE" != "" ]; then
+	    local XML="$1"".xml"
+	    local CHAN="$2"
+	    local PROV="$3"
+	    if [ "$1" == "0409MSOF14" ]; then
+		    local APPDT=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o '<string>Office 2011.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | tail -1 | cut -d' ' -f 3)
+	    elif [ "$1" == "0409UCCP14" ]; then
+		    local APPDT=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -m 1 '<string>Lync 14.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | cut -d' ' -f 2)
+	    else
+		    local APPDT=($(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -A1 -m2 'Date' "$XML" | grep 'date' | sed -e 's,.*<date>\([^<]*\)</date>.*,\1,g'))
+	    fi
+        if [[ "$APPDT" == '' ]] || [[ "$APPDT" != 20* ]]; then
+		    echo ""
+	    else
+		    echo "$APPDT"
+	    fi
+    fi
+}
+
+# Returns the current app version from the XML collateral
+function GetAppLinkFromXML() {
+	local XML="$1"".xml"
+	local CHAN="$2"
+	local PROV="$3"
+	if [ "$1" == "0409MSOF14" ]; then
+		local APPLINK=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o '<string>Office 2011.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | tail -1 | cut -d' ' -f 3)
+	elif [ "$1" == "0409UCCP14" ]; then
+		local APPLINK=$(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -m 1 '<string>Lync 14.*' $1".xml" | cut -d'>' -f2 | cut -d'<' -f1 | cut -d' ' -f 2)
+	else
+		local APPLINK=($(cd "$SCRATCH_AREA"/"$CHAN"/"$PROV" && grep -o -A1 -m2 'FullUpdaterLocation' "$XML" | grep 'string' | sed -e 's,.*<string>\([^<]*\)</string>.*,\1,g'))
+	fi
+    if [[ "$APPLINK" == '' ]] || [[ "$APPLINK" != http* ]]; then
+		echo "Undetermined"
+	else
+		echo "$APPLINK"
+	fi
+}
+
 # Returns the SHA1 hash from the CAT
 function GetHashFromCAT() {
 	local CAT="$1"".cat"
@@ -297,15 +341,15 @@ else
     	ShowUsage
     	shift # past argument
     	;;
-    	--Production|-pr|--production|-cc|--current)
+    	--Production|-pr|--production|-cc|--Current|--current)
 		PROD=true
     	shift # past argument
     	;;
-    	--InsiderSlow|-is|--insiderslow|-pre|--preview)
+    	--InsiderSlow|-is|--insiderslow|-pre|--Preview|--preview)
 		SLOW=true
     	shift # past argument
     	;;
-    	--InsiderFast|-if|--insiderfast|-beta|--beta)
+    	--InsiderFast|-if|--insiderfast|-beta|--Beta|--beta)
 		FAST=true
     	shift # past argument
     	;;
@@ -339,6 +383,18 @@ else
     	;;
     	--AllProviders|-ap|--allproviders)
     	ALLPROVIDERS=true
+    	shift # past argument
+        ;;
+        --Date|-dt|--date)
+    	DATE=true
+    	shift # past argument
+    	;;
+        --Link|-lk|--link)
+    	LINK=true
+    	shift # past argument
+    	;;
+    	--Check|-ck|--check)
+    	CHECK=true
     	shift # past argument
     	;;
     	*)
@@ -395,6 +451,10 @@ do
 		PROVIDERS+=("Akamai")
 	fi
 
+    #echo "$SCRATCH_AREA"
+
+    LINKLIST=()
+
 	for p in "${PROVIDERS[@]}"
 	do
 		PROVIDER="$p"
@@ -411,13 +471,39 @@ do
 		for a in "${MAUAPP[@]}"
 		do
 			APPVERSION=$(GetAppVersionFromXML "$a" "$CHANNEL" "$PROVIDER")
+            APPDATE=$(GetAppDateFromXML "$a" "$CHANNEL" "$PROVIDER")
+			APPNAME=$(GetAppNameFromMAUID "$a")
+			APPLINK=$(GetAppLinkFromXML "$a" "$CHANNEL" "$PROVIDER")
 			CHKFILE="$a"
 			CHKFILE+="-CHK"
 			CHKVERSION=$(GetAppVersionFromXML "$CHKFILE" "$CHANNEL" "$PROVIDER")
-			printf "%-55s" "     Application: $a - $APPVERSION"
-			echo "$CHKFILE - $CHKVERSION"
+            printf '%-50s' "     App: $APPNAME - $APPVERSION"
+			printf "$APPDATE"
+            if [ $CHECK ]; then
+			    echo "$CHKFILE - $CHKVERSION"
+            fi
+            if [ $LINK ] && [[ "$APPLINK" != "Undetermined" ]]; then
+                if $SHOWLINK; then
+                    printf '  '
+                    printf '\e]8;;'$APPLINK'\e\\Link\e]8;;\e\\\n'
+                else
+                    printf '\n'
+                fi
+                LINKLIST+=("$APPNAME : $APPLINK")
+            else
+                printf '\n'
+            fi
 		done
 	done
+
+    if [ $LINK ] && ! $SHOWLINK; then
+        echo "\n${TEXT_BLUE}Download Links ${TEXT_NORMAL}"
+        for l in "${LINKLIST[@]}"
+	    do
+            LINKURL="$l"
+            printf '%s\n' "$LINKURL"
+        done
+    fi
 done
 
 echo
